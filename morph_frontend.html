@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MORPH — collective reality</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #151b3d;
+            --accent: #00ff88;
+            --accent-glow: rgba(0, 255, 136, 0.3);
+            --text-primary: #ffffff;
+            --text-secondary: #8b92b8;
+            --danger: #ff3366;
+            --warning: #ffd700;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .noise {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.03;
+            z-index: 1000;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='6.5' numOctaves='3' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' /%3E%3C/svg%3E");
+        }
+
+        .scan-line {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            animation: scan 4s linear infinite;
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        @keyframes scan {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(100vh); }
+        }
+
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem 2rem;
+            background: rgba(10, 14, 39, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 900;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent) 0%, #00ccff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .live-stats {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        .stat-value {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--danger);
+            animation: blink 1s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .call-button {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent) 0%, #00ccff 100%);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: var(--bg-primary);
+            transition: all 0.3s ease;
+            box-shadow: 0 0 40px var(--accent-glow);
+            z-index: 800;
+            animation: pulse-ring 2s ease-in-out infinite;
+        }
+
+        .call-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 60px var(--accent-glow);
+        }
+
+        .call-button.in-call {
+            background: var(--danger);
+            animation: none;
+        }
+
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 40px var(--accent-glow), 0 0 0 0 var(--accent-glow); }
+            50% { box-shadow: 0 0 60px var(--accent-glow), 0 0 0 20px rgba(0, 255, 136, 0); }
+            100% { box-shadow: 0 0 40px var(--accent-glow), 0 0 0 0 rgba(0, 255, 136, 0); }
+        }
+
+        .main-content {
+            padding: 6rem 2rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .current-state {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .state-header {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .morphed-display {
+            width: 100%;
+            height: 70vh;
+            border-radius: 12px;
+            border: 2px solid rgba(0, 255, 136, 0.3);
+            background: #000;
+            overflow: hidden;
+        }
+
+        .morphed-display iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .placeholder-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .activity-feed {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .feed-header {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .activity-item {
+            padding: 1rem;
+            background: rgba(0, 255, 136, 0.05);
+            border-left: 3px solid var(--accent);
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .activity-item.rejected {
+            border-left-color: var(--danger);
+            background: rgba(255, 51, 102, 0.05);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .activity-time {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-text {
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .activity-user {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* Call Modal */
+        .call-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 2rem;
+        }
+
+        .call-modal.active {
+            display: flex;
+        }
+
+        .call-window {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 3rem;
+            max-width: 600px;
+            width: 100%;
+            border: 2px solid var(--accent);
+            box-shadow: 0 0 60px var(--accent-glow);
+            text-align: center;
+        }
+
+        .call-status {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .listening-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 2rem 0;
+        }
+
+        .wave {
+            width: 4px;
+            height: 40px;
+            background: var(--accent);
+            border-radius: 4px;
+            animation: wave 1s ease-in-out infinite;
+        }
+
+        .wave:nth-child(2) { animation-delay: 0.1s; }
+        .wave:nth-child(3) { animation-delay: 0.2s; }
+        .wave:nth-child(4) { animation-delay: 0.3s; }
+        .wave:nth-child(5) { animation-delay: 0.4s; }
+
+        @keyframes wave {
+            0%, 100% { height: 20px; }
+            50% { height: 50px; }
+        }
+
+        .transcript-display {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            min-height: 100px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            text-align: left;
+        }
+
+        .hang-up-btn {
+            padding: 1rem 3rem;
+            background: var(--danger);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            margin-top: 1rem;
+        }
+
+        .hang-up-btn:hover {
+            background: #ff1744;
+            transform: scale(1.05);
+        }
+
+        .queue-notice {
+            position: fixed;
+            top: 5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 215, 0, 0.15);
+            border: 2px solid var(--warning);
+            color: var(--warning);
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            display: none;
+            z-index: 950;
+        }
+
+        .queue-notice.show {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -20px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .top-bar {
+                padding: 1rem;
+            }
+
+            .live-stats {
+                gap: 1rem;
+                flex-wrap: wrap;
+            }
+
+            .call-button {
+                width: 70px;
+                height: 70px;
+                font-size: 1.8rem;
+                bottom: 1.5rem;
+                right: 1.5rem;
+            }
+
+            .main-content {
+                padding: 5rem 1rem 1rem;
+            }
+
+            .morphed-display {
+                height: 50vh;
+            }
+
+            .call-window {
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="noise"></div>
+    <div class="scan-line"></div>
+
+    <div class="top-bar">
+        <div class="logo">MORPH</div>
+        <div class="live-stats">
+            <div class="stat">
+                <div class="live-dot"></div>
+                <span>LIVE</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="viewerCount">0</span>
+                <span>WATCHING</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="morphCount">0</span>
+                <span>MORPHS</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="queue-notice" id="queueNotice">
+        ⏳ Someone else is calling... Please wait
+    </div>
+
+    <div class="main-content">
+        <div class="current-state">
+            <div class="state-header">CURRENT REALITY</div>
+            <div class="morphed-display" id="morphedDisplay">
+                <div class="placeholder">
+                    <div class="placeholder-icon">📞</div>
+                    <div>Waiting for someone to call...</div>
+                    <div style="font-size: 0.8rem; margin-top: 0.5rem; opacity: 0.5;">
+                        Click the button to transform this space
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="activity-feed">
+            <div class="feed-header">ACTIVITY LOG</div>
+            <div id="activityFeed">
+                <!-- Activity items will be added here -->
+            </div>
+        </div>
+    </div>
+
+    <button class="call-button" id="callButton">📞</button>
+
+    <!-- Call Modal -->
+    <div class="call-modal" id="callModal">
+        <div class="call-window">
+            <div class="call-status" id="callStatus">CONNECTING...</div>
+            <div class="listening-indicator" id="listeningIndicator">
+                <div class="wave"></div>
+                <div class="wave"></div>
+                <div class="wave"></div>
+                <div class="wave"></div>
+                <div class="wave"></div>
+            </div>
+            <div class="transcript-display" id="transcriptDisplay">
+                Speak your idea...
+            </div>
+            <button class="hang-up-btn" id="hangUpBtn">HANG UP</button>
+        </div>
+    </div>
+
+    <script>
+        const WS_URL = 'ws://localhost:8080'; // Change to your server URL in production
+        
+        let ws = null;
+        let recognition = null;
+        let isInCall = false;
+        let userId = Math.random().toString(36).substring(7);
+
+        const callButton = document.getElementById('callButton');
+        const callModal = document.getElementById('callModal');
+        const hangUpBtn = document.getElementById('hangUpBtn');
+        const callStatus = document.getElementById('callStatus');
+        const transcriptDisplay = document.getElementById('transcriptDisplay');
+        const morphedDisplay = document.getElementById('morphedDisplay');
+        const activityFeed = document.getElementById('activityFeed');
+        const viewerCount = document.getElementById('viewerCount');
+        const morphCount = document.getElementById('morphCount');
+        const queueNotice = document.getElementById('queueNotice');
+
+        // Initialize WebSocket connection
+        function connectWebSocket() {
+            ws = new WebSocket(WS_URL);
+
+            ws.onopen = () => {
+                console.log('Connected to MORPH server');
+                ws.send(JSON.stringify({
+                    type: 'join',
+                    userId: userId
+                }));
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleServerMessage(data);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                addActivity('SYSTEM', 'Connection error. Retrying...', true);
+            };
+
+            ws.onclose = () => {
+                console.log('Disconnected. Reconnecting...');
+                setTimeout(connectWebSocket, 2000);
+            };
+        }
+
+        function handleServerMessage(data) {
+            switch (data.type) {
+                case 'stats':
+                    viewerCount.textContent = data.viewers;
+                    morphCount.textContent = data.totalMorphs;
+                    break;
+
+                case 'morph':
+                    updateMorphedDisplay(data.html);
+                    addActivity(data.user, data.idea, false);
+                    break;
+
+                case 'rejected':
+                    addActivity(data.user, `"${data.idea}" — REJECTED: ${data.reason}`, true);
+                    break;
+
+                case 'call_started':
+                    if (data.userId !== userId) {
+                        queueNotice.classList.add('show');
+                    }
+                    break;
+
+                case 'call_ended':
+                    queueNotice.classList.remove('show');
+                    break;
+
+                case 'queue':
+                    queueNotice.classList.add('show');
+                    break;
+
+                case 'history':
+                    if (data.currentMorph) {
+                        updateMorphedDisplay(data.currentMorph.html);
+                    }
+                    data.activities.forEach(activity => {
+                        addActivity(activity.user, activity.text, activity.rejected);
+                    });
+                    break;
+            }
+        }
+
+        function updateMorphedDisplay(html) {
+            morphedDisplay.innerHTML = `<iframe srcdoc="${html.replace(/"/g, '&quot;')}" style="width: 100%; height: 100%; border: none;"></iframe>`;
+        }
+
+        function addActivity(user, text, rejected = false) {
+            const item = document.createElement('div');
+            item.className = `activity-item ${rejected ? 'rejected' : ''}`;
+            
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString();
+            
+            item.innerHTML = `
+                <div class="activity-time">${timeStr}</div>
+                <div class="activity-text">
+                    <span class="activity-user">${user}</span>: ${text}
+                </div>
+            `;
+            
+            activityFeed.insertBefore(item, activityFeed.firstChild);
+            
+            // Keep only last 20 items
+            while (activityFeed.children.length > 20) {
+                activityFeed.removeChild(activityFeed.lastChild);
+            }
+        }
+
+        callButton.addEventListener('click', startCall);
+        hangUpBtn.addEventListener('click', endCall);
+
+        function startCall() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                alert('Not connected to server. Please wait...');
+                return;
+            }
+
+            ws.send(JSON.stringify({
+                type: 'request_call',
+                userId: userId
+            }));
+
+            callModal.classList.add('active');
+            callButton.classList.add('in-call');
+            isInCall = true;
+            startListening();
+        }
+
+        function endCall() {
+            if (recognition) {
+                recognition.stop();
+            }
+            
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'end_call',
+                    userId: userId
+                }));
+            }
+
+            callModal.classList.remove('active');
+            callButton.classList.remove('in-call');
+            isInCall = false;
+            transcriptDisplay.textContent = 'Speak your idea...';
+            callStatus.textContent = 'CONNECTING...';
+        }
+
+        function startListening() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (!SpeechRecognition) {
+                callStatus.textContent = 'Speech recognition not supported';
+                transcriptDisplay.textContent = 'Please use Chrome, Edge, or Safari';
+                return;
+            }
+
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = () => {
+                callStatus.textContent = 'LISTENING...';
+            };
+
+            recognition.onresult = async (event) => {
+                const transcript = event.results[0][0].transcript;
+                transcriptDisplay.textContent = `You said: "${transcript}"`;
+                callStatus.textContent = 'PROCESSING...';
+                
+                // Send to server
+                ws.send(JSON.stringify({
+                    type: 'morph_request',
+                    userId: userId,
+                    idea: transcript
+                }));
+
+                // Close call after sending
+                setTimeout(endCall, 2000);
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                callStatus.textContent = 'ERROR - TRY AGAIN';
+                setTimeout(() => {
+                    if (isInCall) {
+                        recognition.start();
+                    }
+                }, 2000);
+            };
+
+            recognition.start();
+        }
+
+        // Connect on load
+        connectWebSocket();
+    </script>
+</body>
+</html>

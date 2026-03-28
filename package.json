@@ -1,0 +1,25 @@
+{
+  "name": "morph-server",
+  "version": "1.0.0",
+  "description": "Real-time collaborative morphing website server",
+  "main": "morph_server.js",
+  "scripts": {
+    "start": "node morph_server.js",
+    "dev": "nodemon morph_server.js"
+  },
+  "keywords": [
+    "websocket",
+    "real-time",
+    "collaborative",
+    "ai"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.14.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
