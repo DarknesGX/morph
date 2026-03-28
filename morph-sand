@@ -495,7 +495,7 @@
     </div>
 
     <script>
-        const WS_URL = 'morph-sand.vercel.app'; // Change to your server URL in production
+        const WS_URL = 'wss://morph-sand.vercel.app'; // Change to your server URL in production
         
         let ws = null;
         let recognition = null;
